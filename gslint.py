@@ -4,7 +4,7 @@ import re, threading
 import os
 import string
 
-LINE_PAT = re.compile(r':(\d+):(\d+):\s+(.+)\s*$', re.MULTILINE)
+LINE_PAT = re.compile(r'^(.+):(\d+):(\d+):\s+(.+)\s*$', re.MULTILINE)
 
 class GsLint(sublime_plugin.EventListener):
     rc = 0
@@ -105,10 +105,11 @@ class GsLint(sublime_plugin.EventListener):
             self.errors[view_id] = {}
             if lines:
                 for m in lines:
-                    line, start, err = int(m[0])-1, int(m[1])-1, m[2]
-                    self.errors[view_id][line] = err
-                    lr = view.line(view.text_point(line, start))
-                    regions.append(sublime.Region(lr.begin() + start, lr.end()))
+                    if m[0] == view.file_name(): #check if this error message is for the current file
+                        line, start, err = int(m[1])-1, int(m[2])-1, m[3]
+                        self.errors[view_id][line] = err
+                        lr = view.line(view.text_point(line, start))
+                        regions.append(sublime.Region(lr.begin() + start, lr.end()))
             if regions:
                 flags = sublime.DRAW_EMPTY_AS_OVERWRITE | sublime.DRAW_OUTLINED
                 flags = sublime.DRAW_EMPTY_AS_OVERWRITE
